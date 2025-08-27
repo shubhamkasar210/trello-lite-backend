@@ -1,5 +1,6 @@
 const express = require("express");
 const app = express();
+require("./config/database");
 
 app.use("/", (req, res) => {
   res.send("Hello World");
