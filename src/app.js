@@ -7,14 +7,16 @@ app.use(express.json());
 app.use(cookieParser());
 
 const { authRouter } = require("./routes/auth");
+const { projectRouter } = require("./routes/project");
+const { taskRouter } = require("./routes/task");
 
-app.use("/", authRouter);
+app.use("/api/auth", authRouter);
+app.use("/api/projects", projectRouter);
+app.use("/api/tasks", taskRouter);
 
-app.use("/", (err, req, res, next) => {
-  if (err) {
-    res.status(500).send("Something went wrong.");
-  }
-  res.send("Hello World");
+app.use((err, req, res, next) => {
+  console.error(err);
+  res.status(500).json({ message: "Something went wrong." });
 });
 
 connectDB()
