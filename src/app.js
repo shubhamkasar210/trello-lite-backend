@@ -23,11 +23,33 @@ app.post("/signup", async (req, res) => {
     await user.save(user);
     res.send("User added successfully!!!");
   } catch (err) {
-    res.status(400).send("User not added.");
+    res.status(400).send("User not added. Error - " + err);
   }
 });
 
-app.post("/login", async (req, res) => {});
+app.post("/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // if user is present in the db or not
+    const user = await User.findOne({ email: email });
+
+    if (!user) {
+      res.status(404).send("User not found.");
+    }
+
+    // password is correct or not
+    const isAuthenticated = await bcrypt.compare(password, user.password);
+
+    if (isAuthenticated) {
+      res.send("Login Successfull!!!");
+    } else {
+      res.send("Login failed.");
+    }
+  } catch (err) {
+    res.status(401).send("Invalid Credentials. Error - " + err);
+  }
+});
 
 app.post("/logout", async (req, res) => {});
 
