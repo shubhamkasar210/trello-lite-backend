@@ -2,8 +2,11 @@ const express = require("express");
 const app = express();
 const { connectDB } = require("./config/database");
 const bcrypt = require("bcrypt");
+const cookieParser = require("cookie-parser");
+const jwt = require("jsonwebtoken");
 
 app.use(express.json());
+app.use(cookieParser());
 
 // adding middlewares
 
@@ -42,6 +45,9 @@ app.post("/login", async (req, res) => {
     const isAuthenticated = await bcrypt.compare(password, user.password);
 
     if (isAuthenticated) {
+      const token = await jwt.sign({ _id: user._id }, "Iamshubham80@");
+      res.cookie("token", token);
+
       res.send("Login Successfull!!!");
     } else {
       res.send("Login failed.");
@@ -51,7 +57,24 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.post("/logout", async (req, res) => {});
+app.get("/user", async (req, res) => {
+  try {
+    const { token } = req.cookies;
+    const decodeMessage = await jwt.verify(token, "Iamshubham80@");
+    const { _id } = decodeMessage;
+    const user = await User.findOne({ _id: _id });
+    res.send("User name is " + user.userName);
+  } catch (err) {
+    res.status(500).send("Something went wrong.");
+  }
+});
+
+app.post("/logout", async (req, res) => {
+  res.cookie("token", null, {
+    expires: new Date(Date.now()),
+  });
+  res.send("Logout Successfull!!!");
+});
 
 app.use("/", (err, req, res, next) => {
   if (err) {
