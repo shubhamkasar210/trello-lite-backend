@@ -2,16 +2,19 @@ const mongoose = require("mongoose");
 
 const taskSchema = mongoose.Schema(
   {
-    projectId: {
+    project: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Project",
       required: true,
     },
     title: {
       type: String,
+      required: true,
+      trim: true,
     },
     description: {
       type: String,
+      trim: true,
     },
     assignee: {
       type: mongoose.Schema.Types.ObjectId,
@@ -24,9 +27,9 @@ const taskSchema = mongoose.Schema(
       type: String,
       enum: {
         values: ["To Do", "In Progress", "Done"],
-        message: `{VALUE} is not a valid status`,
-        default: "To Do",
+        message: "{VALUE} is not a valid status",
       },
+      default: "To Do",
     },
   },
   { timestamps: true }

@@ -6,13 +6,14 @@ const User = require("../models/user");
 
 authRouter.post("/auth/signup", async (req, res) => {
   try {
-    const { userName, password, email } = req.body;
+    const { userName, password, email, role } = req.body;
     const hashPassword = await bcrypt.hash(password, 10);
 
     const user = new User({
       userName: userName,
       email: email,
       password: hashPassword,
+      role: role,
     });
 
     await user.save(user);

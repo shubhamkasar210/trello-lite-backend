@@ -4,10 +4,12 @@ const userSchema = mongoose.Schema(
   {
     userName: {
       type: String,
+      required: true,
     },
     password: {
       type: String,
       required: true,
+      minlength: 6,
     },
     email: {
       type: String,
@@ -18,8 +20,10 @@ const userSchema = mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
-      message: `{VALUE} is not a valid role`,
+      enum: {
+        values: ["user", "admin"],
+        message: "{VALUE} is not a valid role",
+      },
       default: "user",
     },
   },

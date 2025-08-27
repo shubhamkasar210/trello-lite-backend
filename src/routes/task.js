@@ -1,43 +1,216 @@
-// Tasks - create, update, delete, view
 const express = require("express");
 const taskRouter = express.Router();
 const Task = require("../models/task");
+const Project = require("../models/project");
 
-taskRouter.get("/task", async(req, res) => {
-    try {
-        // get all tasks
-        const Tasks = await Task.find({});
-        if(Tasks.length == 0) {
-            throw new Error();
-        }
-        res.send(Tasks);
-    } catch (err) {
-        res.status(404).send("Something went wrong.");
+const { userAuth } = require("../middlewares/auth");
+const { memberAuth } = require("../middlewares/member");
+
+taskRouter.get("/tasks", userAuth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const projects = await Project.find({
+      $or: [{ owner: userId }, { members: userId }],
+    }).select("_id");
+
+    const projectIds = projects.map((p) => p._id);
+
+    const tasks = await Task.find({ project: { $in: projectIds } })
+      .populate("assignee", "userName email")
+      .populate("project", "title");
+
+    if (!tasks.length) {
+      return res.status(404).send("No tasks found for your projects.");
     }
+
+    res.send(tasks);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Something went wrong.");
+  }
 });
 
-taskRouter.post("/task", async(req, res) => {
-    try {
-        
-    } catch (err) {
-        
+taskRouter.post("/tasks", userAuth, memberAuth, async (req, res) => {
+  try {
+    const { projectId, title, description, assignee, dueDate, status } =
+      req.body;
+
+    if (!projectId || !title) {
+      return res.status(400).send("Project ID and title are required");
     }
+
+    const newTask = new Task({
+      project: projectId,
+      title,
+      description,
+      assignee,
+      dueDate,
+      status,
+    });
+
+    await newTask.save();
+
+    res.status(201).send(newTask);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to create task");
+  }
 });
 
-taskRouter.patch("/task/:id", async(req, res) => {
-    try {
-        
-    } catch (err) {
-        
+taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const userId = req.user._id;
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).send("Task not found");
     }
+
+    const project = await Project.findById(task.project);
+    if (!project) {
+      return res.status(404).send("Project not found");
+    }
+
+    const isMember =
+      project.owner.toString() === userId.toString() ||
+      project.members.some((m) => m.toString() === userId.toString());
+
+    if (!isMember) {
+      return res.status(403).send("Access denied: Not a project member");
+    }
+
+    const updates = {};
+    const allowedFields = [
+      "title",
+      "description",
+      "assignee",
+      "dueDate",
+      "status",
+    ];
+    allowedFields.forEach((field) => {
+      if (req.body[field] !== undefined) {
+        updates[field] = req.body[field];
+      }
+    });
+
+    if (
+      updates.status &&
+      !["To Do", "In Progress", "Done"].includes(updates.status)
+    ) {
+      return res.status(400).send("Invalid status value");
+    }
+
+    const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
+      new: true,
+    });
+
+    res.send(updatedTask);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to update task");
+  }
 });
 
-taskRouter.delete("/task/:id", async(req, res) => {
-    try {
-        
-    } catch (err) {
-        
+taskRouter.delete("/tasks/:id", userAuth, async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const userId = req.user._id;
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).send("Task not found");
     }
+
+    const project = await Project.findById(task.project);
+    if (!project) {
+      return res.status(404).send("Project not found");
+    }
+
+    const isMember =
+      project.owner.toString() === userId.toString() ||
+      project.members.some((m) => m.toString() === userId.toString());
+
+    if (!isMember) {
+      return res.status(403).send("Access denied: Not a project member");
+    }
+
+    await Task.findByIdAndDelete(taskId);
+
+    res.send({ message: "Task deleted successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to delete task");
+  }
 });
 
-module.exports = { taskRouter }
+taskRouter.get("/task/:id", userAuth, async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const userId = req.user._id;
+
+    const task = await Task.findById(taskId)
+      .populate("assignee", "userName email")
+      .populate("project", "title members owner");
+
+    if (!task) {
+      return res.status(404).send("Task not found");
+    }
+
+    const project = task.project;
+
+    const isMember =
+      project.owner.toString() === userId.toString() ||
+      project.members.some((m) => m.toString() === userId.toString());
+
+    if (!isMember) {
+      return res.status(403).send("Access denied: Not a project member");
+    }
+
+    res.send(task);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to get task details");
+  }
+});
+
+taskRouter.patch("/task/:id/status", userAuth, async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { status } = req.body;
+    const userId = req.user._id;
+
+    if (!["To Do", "In Progress", "Done"].includes(status)) {
+      return res.status(400).send("Invalid status value");
+    }
+
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).send("Task not found");
+    }
+
+    const project = await Project.findById(task.project);
+    if (!project) {
+      return res.status(404).send("Project not found");
+    }
+
+    const isMember =
+      project.owner.toString() === userId.toString() ||
+      project.members.some((m) => m.toString() === userId.toString());
+
+    if (!isMember) {
+      return res.status(403).send("Access denied: Not a project member");
+    }
+
+    task.status = status;
+    await task.save();
+
+    res.send(task);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Failed to update task status");
+  }
+});
+
+module.exports = { taskRouter };
