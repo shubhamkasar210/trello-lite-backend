@@ -1,0 +1,29 @@
+{
+  "name": "trello-lite-backend",
+  "version": "1.0.0",
+  "description": "Team Task Manager (Trello-Lite) is a lightweight task management application where teams can create projects, add tasks, assign members, and update task statuses.",
+  "main": "src/app.js",
+  "scripts": {
+    "start": "node src/app.js",
+    "dev": "nodemon src/app.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shubhamkasar210/trello-lite-backend.git"
+  },
+  "keywords": [
+    "trello lite",
+    "Team Task Manager"
+  ],
+  "author": "Shubham Kasar",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/shubhamkasar210/trello-lite-backend/issues"
+  },
+  "homepage": "https://github.com/shubhamkasar210/trello-lite-backend#readme",
+  "dependencies": {
+    "express": "^5.1.0",
+    "mongoose": "^8.18.0",
+    "nodemon": "^3.1.10"
+  }
+}
