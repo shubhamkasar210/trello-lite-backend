@@ -50,10 +50,14 @@ authRouter.post("/auth/login", async (req, res) => {
 });
 
 authRouter.get("/auth/logout", async (req, res) => {
-  res.cookie("token", null, {
-    expires: new Date(Date.now()),
-  });
-  res.send("Logout Successfull!!!");
+  try {
+    res.cookie("token", null, {
+      expires: new Date(Date.now()),
+    });
+    res.send("Logout Successfull!!!");
+  } catch (err) {
+    res.status(500).send("something went wrong");
+  }
 });
 
 module.exports = { authRouter };
