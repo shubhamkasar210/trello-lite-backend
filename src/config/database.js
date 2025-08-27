@@ -2,14 +2,8 @@ const mongoose = require("mongoose");
 
 const connectDB = async () => {
   await mongoose.connect(
-    "mongodb+srv://shubhamkasar:iamshubham80@devcommune.huumbdw.mongodb.net/"
+    "mongodb+srv://shubhamkasar:iamshubham80@devcommune.huumbdw.mongodb.net/trello-lite"
   );
 };
 
-connectDB()
-  .then(() => {
-    console.log("Database Connection Established Successfully!!!");
-  })
-  .catch(() => {
-    console.error("Database Connection Not Established");
-  });
+module.exports = { connectDB };
