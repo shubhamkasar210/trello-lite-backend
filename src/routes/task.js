@@ -195,4 +195,31 @@ taskRouter.patch("/tasks/:id/status", userAuth, async (req, res) => {
   }
 });
 
+// Fetch tasks for a specific project (must be member)
+taskRouter.get("/projects/:id/tasks", userAuth, async (req, res) => {
+  try {
+    const projectId = req.params.id;
+    const userId = req.user._id;
+
+    const project = await Project.findById(projectId);
+    if (!project) return res.status(404).send("Project not found");
+
+    const isMember =
+      project.owner.toString() === userId.toString() ||
+      project.members.some((m) => m.toString() === userId.toString());
+
+    if (!isMember)
+      return res.status(403).send("Access denied: Not a project member");
+
+    const tasks = await Task.find({ project: projectId })
+      .populate("assignee", "userName email")
+      .populate("project", "title");
+
+    res.status(200).json(tasks);
+  } catch (err) {
+    console.error("GET /projects/:id/tasks error:", err);
+    res.status(500).send("Failed to fetch project tasks");
+  }
+});
+
 module.exports = { taskRouter };
