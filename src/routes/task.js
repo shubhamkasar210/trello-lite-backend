@@ -130,7 +130,7 @@ taskRouter.delete("/tasks/:id", userAuth, async (req, res) => {
   }
 });
 
-taskRouter.get("/task/:id", userAuth, async (req, res) => {
+taskRouter.get("/tasks/:id", userAuth, async (req, res) => {
   try {
     const taskId = req.params.id;
     const userId = req.user._id;
@@ -156,7 +156,7 @@ taskRouter.get("/task/:id", userAuth, async (req, res) => {
   }
 });
 
-taskRouter.patch("/task/:id/status", userAuth, async (req, res) => {
+taskRouter.patch("/tasks/:id/status", userAuth, async (req, res) => {
   try {
     const taskId = req.params.id;
     const { status } = req.body;

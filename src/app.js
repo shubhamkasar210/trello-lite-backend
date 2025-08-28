@@ -10,9 +10,9 @@ const { authRouter } = require("./routes/auth");
 const { projectRouter } = require("./routes/project");
 const { taskRouter } = require("./routes/task");
 
-app.use("/api/auth", authRouter);
-app.use("/api/projects", projectRouter);
-app.use("/api/tasks", taskRouter);
+app.use("/", authRouter);
+app.use("/", projectRouter);
+app.use("/", taskRouter);
 
 app.use((err, req, res, next) => {
   console.error(err);
