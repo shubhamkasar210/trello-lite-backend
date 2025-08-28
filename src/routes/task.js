@@ -6,6 +6,7 @@ const Project = require("../models/project");
 const { userAuth } = require("../middlewares/auth");
 const { memberAuth } = require("../middlewares/member");
 
+// Fetch all tasks from projects where user is member or owner
 taskRouter.get("/tasks", userAuth, async (req, res) => {
   try {
     const userId = req.user._id;
@@ -31,6 +32,7 @@ taskRouter.get("/tasks", userAuth, async (req, res) => {
   }
 });
 
+// Create a task in a project (must be a member)
 taskRouter.post("/tasks", userAuth, memberAuth, async (req, res) => {
   try {
     const { projectId, title, description, assignee, dueDate, status } =
@@ -57,6 +59,7 @@ taskRouter.post("/tasks", userAuth, memberAuth, async (req, res) => {
   }
 });
 
+// Update task fields (if user is a project member)
 taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -104,6 +107,7 @@ taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
   }
 });
 
+// Delete a task (only project members)
 taskRouter.delete("/tasks/:id", userAuth, async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -130,6 +134,7 @@ taskRouter.delete("/tasks/:id", userAuth, async (req, res) => {
   }
 });
 
+// Get specific task details (must be member)
 taskRouter.get("/tasks/:id", userAuth, async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -156,6 +161,7 @@ taskRouter.get("/tasks/:id", userAuth, async (req, res) => {
   }
 });
 
+// Update only the status field of a task
 taskRouter.patch("/tasks/:id/status", userAuth, async (req, res) => {
   try {
     const taskId = req.params.id;

@@ -6,6 +6,7 @@ const { userAuth } = require("../middlewares/auth");
 const { ownerAuth } = require("../middlewares/owner");
 const { memberAuth } = require("../middlewares/member");
 
+// Get all projects user is a member of (Authenticated users)
 projectRouter.get("/projects", userAuth, async (req, res) => {
   try {
     const projects = await Project.find({ members: req.user._id });
@@ -15,6 +16,7 @@ projectRouter.get("/projects", userAuth, async (req, res) => {
   }
 });
 
+// Get single project by ID if user is a member (Project members)
 projectRouter.get("/projects/:id", userAuth, async (req, res) => {
   try {
     const projectId = req.params.id;
@@ -38,6 +40,7 @@ projectRouter.get("/projects/:id", userAuth, async (req, res) => {
   }
 });
 
+// Create new project (Authenticated users)
 projectRouter.post("/projects", userAuth, async (req, res) => {
   try {
     const { title, description } = req.body;
@@ -61,6 +64,7 @@ projectRouter.post("/projects", userAuth, async (req, res) => {
   }
 });
 
+// Update project title or description (Project owner only)
 projectRouter.patch("/projects/:id", userAuth, ownerAuth, async (req, res) => {
   try {
     const updates = req.body;
@@ -76,6 +80,7 @@ projectRouter.patch("/projects/:id", userAuth, ownerAuth, async (req, res) => {
   }
 });
 
+// Delete a project (Project owner only)
 projectRouter.delete("/projects/:id", userAuth, ownerAuth, async (req, res) => {
   try {
     const projectId = req.params.id;
@@ -86,6 +91,7 @@ projectRouter.delete("/projects/:id", userAuth, ownerAuth, async (req, res) => {
   }
 });
 
+// Add member to project (Project owner only)
 projectRouter.post(
   "/projects/:id/members",
   userAuth,
@@ -119,6 +125,7 @@ projectRouter.post(
   }
 );
 
+// List all members in project (Project members)
 projectRouter.get(
   "/projects/:id/members",
   userAuth,
@@ -143,6 +150,7 @@ projectRouter.get(
   }
 );
 
+// Remove a member from project (Project owner only)
 projectRouter.delete(
   "/projects/:id/members/:memberId",
   userAuth,
