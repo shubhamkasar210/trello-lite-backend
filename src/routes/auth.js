@@ -4,6 +4,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 
+// Register a new user with hashed password
 authRouter.post("/auth/signup", async (req, res) => {
   try {
     const { userName, password, email, role } = req.body;
@@ -23,6 +24,7 @@ authRouter.post("/auth/signup", async (req, res) => {
   }
 });
 
+// Login user, validate credentials, return jwt token
 authRouter.post("/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -53,6 +55,7 @@ authRouter.post("/auth/login", async (req, res) => {
   }
 });
 
+// Clear jwt cookie to log user out
 authRouter.get("/auth/logout", async (req, res) => {
   try {
     res.clearCookie("token");
