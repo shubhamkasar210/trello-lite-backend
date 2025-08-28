@@ -4,13 +4,14 @@ const Project = require("../models/project");
 
 const { userAuth } = require("../middlewares/user");
 const { ownerAuth } = require("../middlewares/owner");
+const { memberAuth } = require("../middlewares/member");
 
 projectRouter.get("/projects", userAuth, async (req, res) => {
   try {
     const projects = await Project.find({ members: req.user._id });
     res.status(200).json(projects);
   } catch (err) {
-    res.status(500).send("Something went wrong.");
+    res.status(500).json({ error: "Something went wrong." });
   }
 });
 
@@ -26,12 +27,14 @@ projectRouter.get("/projects/:id", userAuth, async (req, res) => {
       .populate("members", "userName email");
 
     if (!project) {
-      return res.status(404).send("Project not found or access denied");
+      return res
+        .status(404)
+        .json({ error: "Project not found or access denied" });
     }
 
     res.status(200).json(project);
   } catch (err) {
-    res.status(500).send("Error fetching project details");
+    res.status(500).json({ error: "Error fetching project details" });
   }
 });
 
@@ -40,7 +43,7 @@ projectRouter.post("/projects", userAuth, async (req, res) => {
     const { title, description } = req.body;
 
     if (!title) {
-      return res.status(400).send("Title is required");
+      return res.status(400).json({ error: "Title is required" });
     }
 
     const project = new Project({
@@ -54,7 +57,7 @@ projectRouter.post("/projects", userAuth, async (req, res) => {
 
     res.status(201).json(project);
   } catch (err) {
-    res.status(500).send("Error creating project.");
+    res.status(500).json({ error: "Error creating project." });
   }
 });
 
@@ -69,7 +72,7 @@ projectRouter.patch("/projects/:id", userAuth, ownerAuth, async (req, res) => {
 
     res.status(200).json(updatedProject);
   } catch (err) {
-    res.status(500).send("Error updating project.");
+    res.status(500).json({ error: "Error updating project." });
   }
 });
 
@@ -77,9 +80,9 @@ projectRouter.delete("/projects/:id", userAuth, ownerAuth, async (req, res) => {
   try {
     const projectId = req.params.id;
     await Project.findByIdAndDelete(projectId);
-    res.status(200).send("Project deleted");
+    res.status(200).json({ message: "Project deleted" });
   } catch (err) {
-    res.status(500).send("Error deleting project.");
+    res.status(500).json({ error: "Error deleting project." });
   }
 });
 
@@ -93,7 +96,7 @@ projectRouter.post(
       const project = req.project;
 
       if (!memberId) {
-        return res.status(400).send("memberId is required");
+        return res.status(400).json({ error: "memberId is required" });
       }
 
       const alreadyMember = project.members.some(
@@ -101,7 +104,9 @@ projectRouter.post(
       );
 
       if (alreadyMember) {
-        return res.status(400).send("User is already a project member");
+        return res
+          .status(400)
+          .json({ error: "User is already a project member" });
       }
 
       project.members.push(memberId);
@@ -109,7 +114,7 @@ projectRouter.post(
 
       res.status(200).json(project);
     } catch (err) {
-      res.status(500).send("Error adding member.");
+      res.status(500).json({ error: "Error adding member." });
     }
   }
 );
@@ -120,14 +125,20 @@ projectRouter.get(
   memberAuth,
   async (req, res) => {
     try {
-      await project
+      const project = await Project.findOne({
+        _id: req.params.id,
+        members: req.user._id,
+      })
         .populate("owner", "userName email role")
-        .populate("members", "userName email role")
-        .execPopulate();
+        .populate("members", "userName email role");
 
-      res.send([project.owner, ...project.members]);
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
+
+      res.json([project.owner, ...project.members]);
     } catch (err) {
-      res.status(500).send("Failed to get project members");
+      res.status(500).json({ error: "Failed to get project members" });
     }
   }
 );
@@ -139,9 +150,14 @@ projectRouter.delete(
   async (req, res) => {
     try {
       const { memberId } = req.params;
+      const project = await Project.findById(req.params.id);
+
+      if (!project) {
+        return res.status(404).json({ error: "Project not found" });
+      }
 
       if (memberId === project.owner.toString()) {
-        return res.status(400).send("Cannot remove project owner");
+        return res.status(400).json({ error: "Cannot remove project owner" });
       }
 
       project.members = project.members.filter(
@@ -150,9 +166,9 @@ projectRouter.delete(
 
       await project.save();
 
-      res.send({ message: "Member removed successfully" });
+      res.json({ message: "Member removed successfully" });
     } catch (err) {
-      res.status(500).send("Failed to remove member");
+      res.status(500).json({ error: "Failed to remove member" });
     }
   }
 );

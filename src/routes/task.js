@@ -24,9 +24,9 @@ taskRouter.get("/tasks", userAuth, async (req, res) => {
       return res.status(404).send("No tasks found for your projects.");
     }
 
-    res.send(tasks);
+    res.status(200).json(tasks);
   } catch (err) {
-    console.error(err);
+    console.error("GET /tasks error:", err);
     res.status(500).send("Something went wrong.");
   }
 });
@@ -50,10 +50,9 @@ taskRouter.post("/tasks", userAuth, memberAuth, async (req, res) => {
     });
 
     await newTask.save();
-
-    res.status(201).send(newTask);
+    res.status(201).json(newTask);
   } catch (err) {
-    console.error(err);
+    console.error("POST /tasks error:", err);
     res.status(500).send("Failed to create task");
   }
 });
@@ -64,22 +63,17 @@ taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
     const userId = req.user._id;
 
     const task = await Task.findById(taskId);
-    if (!task) {
-      return res.status(404).send("Task not found");
-    }
+    if (!task) return res.status(404).send("Task not found");
 
     const project = await Project.findById(task.project);
-    if (!project) {
-      return res.status(404).send("Project not found");
-    }
+    if (!project) return res.status(404).send("Project not found");
 
     const isMember =
       project.owner.toString() === userId.toString() ||
       project.members.some((m) => m.toString() === userId.toString());
 
-    if (!isMember) {
+    if (!isMember)
       return res.status(403).send("Access denied: Not a project member");
-    }
 
     const updates = {};
     const allowedFields = [
@@ -90,9 +84,7 @@ taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
       "status",
     ];
     allowedFields.forEach((field) => {
-      if (req.body[field] !== undefined) {
-        updates[field] = req.body[field];
-      }
+      if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
 
     if (
@@ -105,10 +97,9 @@ taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
     const updatedTask = await Task.findByIdAndUpdate(taskId, updates, {
       new: true,
     });
-
-    res.send(updatedTask);
+    res.status(200).json(updatedTask);
   } catch (err) {
-    console.error(err);
+    console.error("PATCH /tasks/:id error:", err);
     res.status(500).send("Failed to update task");
   }
 });
@@ -119,28 +110,22 @@ taskRouter.delete("/tasks/:id", userAuth, async (req, res) => {
     const userId = req.user._id;
 
     const task = await Task.findById(taskId);
-    if (!task) {
-      return res.status(404).send("Task not found");
-    }
+    if (!task) return res.status(404).send("Task not found");
 
     const project = await Project.findById(task.project);
-    if (!project) {
-      return res.status(404).send("Project not found");
-    }
+    if (!project) return res.status(404).send("Project not found");
 
     const isMember =
       project.owner.toString() === userId.toString() ||
       project.members.some((m) => m.toString() === userId.toString());
 
-    if (!isMember) {
+    if (!isMember)
       return res.status(403).send("Access denied: Not a project member");
-    }
 
     await Task.findByIdAndDelete(taskId);
-
-    res.send({ message: "Task deleted successfully" });
+    res.status(200).json({ message: "Task deleted successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("DELETE /tasks/:id error:", err);
     res.status(500).send("Failed to delete task");
   }
 });
@@ -154,23 +139,19 @@ taskRouter.get("/task/:id", userAuth, async (req, res) => {
       .populate("assignee", "userName email")
       .populate("project", "title members owner");
 
-    if (!task) {
-      return res.status(404).send("Task not found");
-    }
+    if (!task) return res.status(404).send("Task not found");
 
     const project = task.project;
-
     const isMember =
       project.owner.toString() === userId.toString() ||
       project.members.some((m) => m.toString() === userId.toString());
 
-    if (!isMember) {
+    if (!isMember)
       return res.status(403).send("Access denied: Not a project member");
-    }
 
-    res.send(task);
+    res.status(200).json(task);
   } catch (err) {
-    console.error(err);
+    console.error("GET /task/:id error:", err);
     res.status(500).send("Failed to get task details");
   }
 });
@@ -186,29 +167,24 @@ taskRouter.patch("/task/:id/status", userAuth, async (req, res) => {
     }
 
     const task = await Task.findById(taskId);
-    if (!task) {
-      return res.status(404).send("Task not found");
-    }
+    if (!task) return res.status(404).send("Task not found");
 
     const project = await Project.findById(task.project);
-    if (!project) {
-      return res.status(404).send("Project not found");
-    }
+    if (!project) return res.status(404).send("Project not found");
 
     const isMember =
       project.owner.toString() === userId.toString() ||
       project.members.some((m) => m.toString() === userId.toString());
 
-    if (!isMember) {
+    if (!isMember)
       return res.status(403).send("Access denied: Not a project member");
-    }
 
     task.status = status;
     await task.save();
 
-    res.send(task);
+    res.status(200).json(task);
   } catch (err) {
-    console.error(err);
+    console.error("PATCH /task/:id/status error:", err);
     res.status(500).send("Failed to update task status");
   }
 });
