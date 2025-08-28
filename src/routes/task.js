@@ -222,4 +222,122 @@ taskRouter.get("/projects/:id/tasks", userAuth, async (req, res) => {
   }
 });
 
+// Get specific task details for a project (must be member)
+taskRouter.get(
+  "/projects/:projectId/tasks/:taskId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { projectId, taskId } = req.params;
+      const userId = req.user._id;
+
+      const task = await Task.findOne({ _id: taskId, project: projectId })
+        .populate("assignee", "userName email")
+        .populate("project", "title members owner");
+
+      if (!task) return res.status(404).send("Task not found");
+
+      const project = task.project;
+      const isMember =
+        project.owner.toString() === userId.toString() ||
+        project.members.some((m) => m.toString() === userId.toString());
+
+      if (!isMember)
+        return res.status(403).send("Access denied: Not a project member");
+
+      res.status(200).json(task);
+    } catch (err) {
+      console.error("GET /projects/:projectId/tasks/:taskId error:", err);
+      res.status(500).send("Failed to get task details");
+    }
+  }
+);
+
+// Get a specific task by projectId and taskId
+taskRouter.get(
+  "/projects/:projectId/tasks/:taskId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { projectId, taskId } = req.params;
+      const userId = req.user._id;
+
+      const project = await Project.findById(projectId);
+      if (!project) return res.status(404).send("Project not found");
+
+      const isMember =
+        project.owner.toString() === userId.toString() ||
+        project.members.some((m) => m.toString() === userId.toString());
+
+      if (!isMember)
+        return res.status(403).send("Access denied: Not a project member");
+
+      const task = await Task.findOne({ _id: taskId, project: projectId })
+        .populate("assignee", "userName email")
+        .populate("project", "title members owner");
+
+      if (!task) return res.status(404).send("Task not found");
+
+      res.status(200).json(task);
+    } catch (err) {
+      console.error("GET /projects/:projectId/tasks/:taskId error:", err);
+      res.status(500).send("Failed to fetch task details");
+    }
+  }
+);
+
+// Update a specific task by projectId and taskId
+taskRouter.patch(
+  "/projects/:projectId/tasks/:taskId",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { projectId, taskId } = req.params;
+      const userId = req.user._id;
+
+      const project = await Project.findById(projectId);
+      if (!project) return res.status(404).send("Project not found");
+
+      const isMember =
+        project.owner.toString() === userId.toString() ||
+        project.members.some((m) => m.toString() === userId.toString());
+
+      if (!isMember)
+        return res.status(403).send("Access denied: Not a project member");
+
+      const updates = {};
+      const allowedFields = [
+        "title",
+        "description",
+        "assignee",
+        "dueDate",
+        "status",
+      ];
+      allowedFields.forEach((field) => {
+        if (req.body[field] !== undefined) updates[field] = req.body[field];
+      });
+
+      if (
+        updates.status &&
+        !["To Do", "In Progress", "Done"].includes(updates.status)
+      ) {
+        return res.status(400).send("Invalid status value");
+      }
+
+      const updatedTask = await Task.findOneAndUpdate(
+        { _id: taskId, project: projectId },
+        updates,
+        { new: true }
+      );
+
+      if (!updatedTask) return res.status(404).send("Task not found");
+
+      res.status(200).json(updatedTask);
+    } catch (err) {
+      console.error("PATCH /projects/:projectId/tasks/:taskId error:", err);
+      res.status(500).send("Failed to update task");
+    }
+  }
+);
+
 module.exports = { taskRouter };
