@@ -2,7 +2,7 @@ const express = require("express");
 const projectRouter = express.Router();
 const Project = require("../models/project");
 
-const { userAuth } = require("../middlewares/user");
+const { userAuth } = require("../middlewares/auth");
 const { ownerAuth } = require("../middlewares/owner");
 const { memberAuth } = require("../middlewares/member");
 
