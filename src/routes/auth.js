@@ -29,29 +29,36 @@ authRouter.post("/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // if user is present in the db or not
-    const user = await User.findOne({ email: email });
+    if (!email || !password) {
+      return res.status(400).send("Email and password are required.");
+    }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return res.status(400).send("Invalid email format.");
+    }
+
+    const user = await User.findOne({ email: email });
     if (!user) {
       return res.status(404).send("User not found.");
     }
 
-    // password is correct or not
     const isAuthenticated = await bcrypt.compare(password, user.password);
-
-    if (isAuthenticated) {
-      const token = await jwt.sign({ _id: user._id }, "Iamshubham80@");
-      res.cookie("token", token);
-
-      res.json({
-        message: "Login successful",
-        user: { id: user._id, email: user.email, role: user.role },
-      });
-    } else {
-      res.send("Login failed.");
+    if (!isAuthenticated) {
+      return res.status(401).send("Incorrect password.");
     }
+
+    const token = jwt.sign({ _id: user._id }, "Iamshubham80@", {
+      expiresIn: "1d",
+    });
+    res.cookie("token", token, { httpOnly: true });
+
+    res.json({
+      message: "Login successful",
+      user: { id: user._id, email: user.email, role: user.role },
+    });
   } catch (err) {
-    res.status(401).send("Invalid Credentials. Error - " + err);
+    res.status(500).send("Something went wrong. Error - " + err);
   }
 });
 
