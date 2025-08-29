@@ -1,9 +1,7 @@
 const mongoose = require("mongoose");
 
 const connectDB = async () => {
-  await mongoose.connect(
-    "mongodb+srv://shubhamkasar:iamshubham80@devcommune.huumbdw.mongodb.net/trello-lite"
-  );
+  await mongoose.connect(process.env.MONGODB_URI);
 };
 
 module.exports = { connectDB };

@@ -48,8 +48,8 @@ authRouter.post("/auth/login", async (req, res) => {
       return res.status(401).send("Incorrect password.");
     }
 
-    const token = jwt.sign({ _id: user._id }, "Iamshubham80@", {
-      expiresIn: "1d",
+    const token = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
     });
     res.cookie("token", token, { httpOnly: true });
 
