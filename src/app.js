@@ -7,9 +7,10 @@ const cookieParser = require("cookie-parser");
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://trello-lite-frontend-sk.vercel.app",
+      "http://localhost:5173",
     ],
+    methods: ["GET", "POST", "PUT", "DELETE"],
     credentials: true,
   })
 );
