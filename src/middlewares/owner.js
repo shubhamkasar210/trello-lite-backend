@@ -3,7 +3,7 @@ const Project = require("../models/project");
 const ownerAuth = async (req, res, next) => {
   try {
     const userId = req.user?._id;
-    const projectId = req.params.id;
+    const projectId = req.params.id || req.body.projectId;
 
     if (!projectId) {
       return res.status(400).send("Project ID is required");
