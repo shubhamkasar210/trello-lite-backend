@@ -63,7 +63,7 @@ authRouter.post("/auth/login", async (req, res) => {
 });
 
 // Clear jwt cookie to log user out
-authRouter.get("/auth/logout", async (req, res) => {
+authRouter.post("/auth/logout", async (req, res) => {
   try {
     res.clearCookie("token");
     res.json({ message: "Logout successful" });
