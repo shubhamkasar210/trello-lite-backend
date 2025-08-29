@@ -108,31 +108,39 @@ taskRouter.patch("/tasks/:id", userAuth, async (req, res) => {
 });
 
 // Delete a task (only project members)
-taskRouter.delete("/tasks/:id", userAuth, async (req, res) => {
-  try {
-    const taskId = req.params.id;
-    const userId = req.user._id;
+taskRouter.delete(
+  "/projects/:projectId/tasks/:id",
+  userAuth,
+  async (req, res) => {
+    try {
+      const { projectId, id: taskId } = req.params;
+      const userId = req.user._id;
 
-    const task = await Task.findById(taskId);
-    if (!task) return res.status(404).send("Task not found");
+      const task = await Task.findById(taskId);
+      if (!task) return res.status(404).send("Task not found");
 
-    const project = await Project.findById(task.project);
-    if (!project) return res.status(404).send("Project not found");
+      if (task.project.toString() !== projectId) {
+        return res.status(400).send("Task does not belong to this project");
+      }
 
-    const isMember =
-      project.owner.toString() === userId.toString() ||
-      project.members.some((m) => m.toString() === userId.toString());
+      const project = await Project.findById(projectId);
+      if (!project) return res.status(404).send("Project not found");
 
-    if (!isMember)
-      return res.status(403).send("Access denied: Not a project member");
+      const isMember =
+        project.owner.toString() === userId.toString() ||
+        project.members.some((m) => m.toString() === userId.toString());
 
-    await Task.findByIdAndDelete(taskId);
-    res.status(200).json({ message: "Task deleted successfully" });
-  } catch (err) {
-    console.error("DELETE /tasks/:id error:", err);
-    res.status(500).send("Failed to delete task");
+      if (!isMember)
+        return res.status(403).send("Access denied: Not a project member");
+
+      await Task.findByIdAndDelete(taskId);
+      res.status(200).json({ message: "Task deleted successfully" });
+    } catch (err) {
+      console.error("DELETE /projects/:projectId/tasks/:id error:", err);
+      res.status(500).send("Failed to delete task");
+    }
   }
-});
+);
 
 // Get specific task details (must be member)
 taskRouter.get("/tasks/:id", userAuth, async (req, res) => {
