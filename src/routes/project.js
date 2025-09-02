@@ -99,26 +99,26 @@ projectRouter.post(
   async (req, res) => {
     try {
       const { memberId } = req.body;
-      const project = req.project;
+      const projectId = req.params.id;
 
       if (!memberId) {
         return res.status(400).json({ error: "memberId is required" });
       }
 
-      const alreadyMember = project.members.some(
-        (id) => id.toString() === memberId.toString()
-      );
+      // Use $addToSet to prevent duplicate members
+      const updatedProject = await Project.findByIdAndUpdate(
+        projectId,
+        { $addToSet: { members: memberId } },
+        { new: true }
+      )
+        .populate("owner", "userName email")
+        .populate("members", "userName email");
 
-      if (alreadyMember) {
-        return res
-          .status(400)
-          .json({ error: "User is already a project member" });
+      if (!updatedProject) {
+        return res.status(404).json({ error: "Project not found" });
       }
 
-      project.members.push(memberId);
-      await project.save();
-
-      res.status(200).json(project);
+      res.status(200).json(updatedProject);
     } catch (err) {
       res.status(500).json({ error: "Error adding member." });
     }

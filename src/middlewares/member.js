@@ -27,7 +27,8 @@ const memberAuth = async (req, res, next) => {
       return res.status(403).send("Access denied: Not a project member");
     }
 
-    req.project = project;
+    req.project = 
+    project;
     next();
   } catch (err) {
     console.error("Member Authentication Error:", err);
